@@ -1,3 +1,22 @@
+# Overview
+
+Proof of Concept to extract RPC execution into a separate scalable service.
+
+Similar to making a `eth_call` rpc call, you register a call with the service.
+
+The service will execute the call, spy on accessed storage slots, and then
+begin caching / updating those storage slots in real time. Once a new block
+arrives, all registered `eth_call` subscriptions will be executed again, with 
+a pre-warmed cache of most  if-not-all required storage slots. 
+
+We bulk pull storage data using the `eth_getProof` method, and populate the results
+in a redis cache. Redis is also used as a pub/sub service, to track which 
+addresses and storage slots are currently being watched.
+
+Most importantly, the actual `eth_call` execution is done locally, via a local
+node.js EVM, it's NOT shipped to a remote rpc server for execution.
+
+
 # Get Started
 
 ```sh
