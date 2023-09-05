@@ -19,6 +19,10 @@ node.js EVM, it's NOT shipped to a remote rpc server for execution.
 
 # Get Started
 
+Note: it's not required, but I'd highly recommend installing Redis Insights GUI, it's free from:
+
+https://redis.com/redis-enterprise/redis-insight/
+
 ```sh
 # install deps
 yarn install
