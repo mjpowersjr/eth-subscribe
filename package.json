@@ -1,0 +1,25 @@
+{
+  "name": "eth-subscribe",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node --enable-source-maps --inspect -r ts-node/register src/index.ts",
+    "start:debug": "node --enable-source-maps --inspect-brk -r ts-node/register src/index.ts"
+  },
+  "dependencies": {
+    "@ethereumjs/common": "^4.0.0",
+    "@ethereumjs/statemanager": "^2.0.0",
+    "@ethereumjs/tx": "^5.0.0",
+    "@ethereumjs/vm": "^7.0.0",
+    "@ethersproject/abi": "^5.7.0",
+    "@redis/client": "^1.5.9",
+    "@tsconfig/node18": "^18.2.1",
+    "@types/node": "^20.5.8",
+    "@uniswap/v2-core": "^1.0.1",
+    "ethers": "^6.7.1",
+    "jest": "^29.6.4",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  }
+}
