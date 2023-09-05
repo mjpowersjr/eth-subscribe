@@ -4,7 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start:client": "node --enable-source-maps -r ts-node/register src/client.ts",
+    "demo:balance-of": "node --enable-source-maps -r ts-node/register src/examples/demo-balance-of.ts",
+    "demo:get-reserves": "node --enable-source-maps -r ts-node/register src/examples/demo-get-reserves.ts",
     "start:server": "node --enable-source-maps -r ts-node/register src/index.ts",
     "start:server:debug": "node --enable-source-maps --inspect-brk -r ts-node/register src/index.ts"
   },

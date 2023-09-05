@@ -16,7 +16,7 @@ const CONTRACT_ADDR = '0x70258aa9830c2c84d855df1d61e12c256f6448b4';
 const STORAGE_SLOTS = [
     '0x' + '0'.repeat(64),
 ];
-for(let i = 0; i < 10_000; i++) {
+for(let i = 0; i < 1_000; i++) {
     STORAGE_SLOTS.push('0x' + i.toString(16).padStart(64, '0'));
 }
 
@@ -47,7 +47,8 @@ const main = async () => {
     const proof = await rpc.send('eth_getProof', [
         CONTRACT_ADDR,
         STORAGE_SLOTS,
-        latestBlockNumber,
+        // latestBlockNumber,
+        previousBlockNumber
     ]);
     console.timeEnd('eth_getProof');
 
@@ -100,7 +101,7 @@ const main = async () => {
         const storageVal = await storageTrie.get(hexToBytes(STORAGE_SLOTS[i]), true)
 
         if (storageVal == null) {
-            console.log("Nothing returned")
+            // console.log("Nothing returned")
         } else {
             if (i == 0) { // The storage of resolvers is a record. The first field is owner
                 console.log(`Owner: ${ethers.decodeRlp(bytesToHex(storageVal))}`)
