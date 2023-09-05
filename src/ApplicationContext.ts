@@ -10,11 +10,11 @@ import { AddressStorageKeyCodec } from './codecs/AddressStorageKeyCodec';
 import { StorageAccessRecorder } from './simulator/StorageAccessRecorder';
 
 LoggerFactory.configure({
-    default: 'info',
-    [StorageAccessRecorder.name]: 'debug',
-    [StorageSubscriptionManager.name]: 'debug',
     [AddressStorageKeyCodec.name]: 'info',
     [EthereumProofFetcher.name]: 'info',
+    [StorageAccessRecorder.name]: 'info',
+    [StorageSubscriptionManager.name]: 'info',
+    default: 'info',
 })
 
 export const provider = new ethers.JsonRpcProvider(

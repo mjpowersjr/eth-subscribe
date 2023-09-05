@@ -6,8 +6,8 @@
   "scripts": {
     "demo:balance-of": "node --enable-source-maps -r ts-node/register examples/demo-balance-of.ts",
     "demo:get-reserves": "node --enable-source-maps -r ts-node/register examples/demo-get-reserves.ts",
-    "start:server": "node --enable-source-maps -r ts-node/register src/index.ts",
-    "start:server:debug": "node --enable-source-maps --inspect-brk -r ts-node/register src/index.ts"
+    "server:start": "node --enable-source-maps -r ts-node/register src/index.ts",
+    "server:debug": "node --enable-source-maps --inspect-brk -r ts-node/register src/index.ts"
   },
   "dependencies": {
     "@ethereumjs/common": "^4.0.0",
