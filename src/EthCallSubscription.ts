@@ -51,6 +51,10 @@ export class EthCallSubscription extends EventEmitter {
         this.handleStorageUpdate = this.handleStorageUpdate.bind(this);
     }
 
+    async start() {
+        this.redisClient.subscribe('block_height', this.handleStorageUpdate);
+    }
+
     async executeAt(blockNumber: bigint): Promise<EVMResult> {
         // console.log({
         //     method: 'executeAt',
@@ -117,7 +121,6 @@ export class EthCallSubscription extends EventEmitter {
 
         this.subscriptions = subscriptionsNew;
 
-        this.redisClient.subscribe('block_height', this.handleStorageUpdate);
     }
 
     async addAll(address: string, storageSlots: Array<string> | Set<string>): Promise<void> {

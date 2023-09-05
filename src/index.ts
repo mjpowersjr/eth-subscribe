@@ -13,6 +13,10 @@ import RedisClientMultiCommand from '@redis/client/dist/lib/client/multi-command
 import { EthereumProofFetcher } from './contract-storage/EthereumProofFetcher';
 import { RedisClientFactory } from './RedisClientFactory';
 import { EVMResult } from '@ethereumjs/evm';
+import axios from 'axios';
+import { bytesToHex } from '@ethereumjs/util';
+
+import fastify, { FastifyReply, FastifyRequest } from 'fastify';
 
 async function main(args: string[]) {
 
@@ -31,43 +35,88 @@ async function main(args: string[]) {
         redisClient: await RedisClientFactory.getInstance(),
         proofFetcher,
         subscriptionManager,
-    })
-
-    //////////
-    const contractAddress = '0x2cc846fff0b08fb3bffad71f53a60b4b6e6d6482';
-    const iface = new Interface(IUniswapV2Pair.abi);
-    const data = iface.encodeFunctionData('getReserves')
-    const blockTag = await provider.getBlockNumber();
-
-    const ethCallSubscription = new EthCallSubscription({
-        provider,
-        storageManager,
-        redisClient: await RedisClientFactory.getInstance(),
-        subscriptionManager,
-        request: {
-            address: contractAddress,
-            data
-        }
     });
 
-    function summarizeResults({ blockNumber, result }: { blockNumber: BlockTag; result: EVMResult }) {
-        const decoded = iface.decodeFunctionResult('getReserves', result.execResult.returnValue);
-        console.log(`[${blockNumber}] reserve0: ${decoded.reserve0}\treserve1: ${decoded.reserve1}`);
-    }
+    const server = fastify()
+    server.post('/subscribe', async (request: FastifyRequest, reply: FastifyReply) => {
+        console.log(request.body);
 
-    const result = await ethCallSubscription.executeAt(BigInt(blockTag));
-    summarizeResults({ blockNumber: blockTag, result });
+        const {
+            callback,
+            address,
+            data
+        } = request.body as any;
 
-    ethCallSubscription.on('update', (updates) => {
-        summarizeResults(updates);
-    })
+        const ethCallSubscription = new EthCallSubscription({
+            provider,
+            storageManager,
+            redisClient: await RedisClientFactory.getInstance(),
+            subscriptionManager,
+            request: {
+                address,
+                data
+            }
+        });
+
+        ethCallSubscription.on('update', async ({
+            blockNumber,
+            result
+        }: {
+            blockNumber: BlockTag;
+            result: EVMResult
+        }) => {
+
+            console.log({
+
+            })
+
+            await axios.request({
+                method: 'post',
+                url: callback,
+                data: {
+                    blockNumber: '0x' + blockNumber.toString(16),
+                    returnValue: bytesToHex(result.execResult.returnValue)
+                }
+            });
+
+        })
+
+        await ethCallSubscription.start();
+    });
+    server.listen({
+        port: 1999
+    });
+
+    //////////
+    // const contractAddress = '0x2cc846fff0b08fb3bffad71f53a60b4b6e6d6482';
+    // const iface = new Interface(IUniswapV2Pair.abi);
+    // const data = iface.encodeFunctionData('getReserves')
+    // const blockTag = await provider.getBlockNumber();
+
+
+    // function summarizeResults({ blockNumber, result }: { blockNumber: BlockTag; result: EVMResult }) {
+    //     const decoded = iface.decodeFunctionResult('getReserves', result.execResult.returnValue);
+    //     console.log(`[${blockNumber}] reserve0: ${decoded.reserve0}\treserve1: ${decoded.reserve1}`);
+    // }
+
+    // const result = await ethCallSubscription.executeAt(BigInt(blockTag));
+    // summarizeResults({ blockNumber: blockTag, result });
+    // FIXME: call init
+
+    // ethCallSubscription.on('update', (updates) => {
+    //     summarizeResults(updates);
+    // })
 
 
     provider.on('block', async (blockNumber) => {
         // console.log('-'.repeat(80))
         // console.log(`| updating for block: ${blockNumber}`)
         // console.log('-'.repeat(80))
-        await storageManager.update(blockNumber);
+        try {
+            await storageManager.update(blockNumber);
+        } catch (e) {
+            console.error(e);
+        }
     });
 
     // const returnValue = iface.decodeFunctionResult('getReserves', result.execResult.returnValue);

@@ -4,8 +4,9 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "node --enable-source-maps --inspect -r ts-node/register src/index.ts",
-    "start:debug": "node --enable-source-maps --inspect-brk -r ts-node/register src/index.ts"
+    "start:client": "node --enable-source-maps -r ts-node/register src/client.ts",
+    "start:server": "node --enable-source-maps -r ts-node/register src/index.ts",
+    "start:server:debug": "node --enable-source-maps --inspect-brk -r ts-node/register src/index.ts"
   },
   "dependencies": {
     "@ethereumjs/common": "^4.0.0",
@@ -17,7 +18,9 @@
     "@tsconfig/node18": "^18.2.1",
     "@types/node": "^20.5.8",
     "@uniswap/v2-core": "^1.0.1",
+    "axios": "^1.5.0",
     "ethers": "^6.7.1",
+    "fastify": "^4.22.2",
     "jest": "^29.6.4",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
