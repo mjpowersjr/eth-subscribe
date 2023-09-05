@@ -8,27 +8,28 @@ import {
     hexToBytes,
  } from '@ethereumjs/util'
 import redis from "@redis/client";
+import { StorageManager } from "../contract-storage/StorageManager";
 
 export interface CachingStateManagerOpts extends EthersStateManagerOpts {
-    redisClient: redis.RedisClientType<redis.RedisModules, redis.RedisFunctions, redis.RedisScripts>;
+    storageManager: StorageManager;
 }
 
 export class CachingStateManager extends EthersStateManager {
 
-    redisClient: redis.RedisClientType<redis.RedisModules, redis.RedisFunctions, redis.RedisScripts>;
+    storageManager: StorageManager;
 
     constructor(opts: CachingStateManagerOpts) {
         super(opts);
-        this.redisClient = opts.redisClient;
+        this.storageManager = opts.storageManager;
     }
 
     async getContractStorage(address: Address, key: Uint8Array): Promise<Uint8Array> {
         
-        const cacheKey = [
-            this._blockTag,
-            address.toString().toLowerCase(),
-            bytesToHex(unpadBytes(key)),
-        ].join(':');
+        // const cacheKey = [
+        //     this._blockTag,
+        //     address.toString().toLowerCase(),
+        //     bytesToHex(unpadBytes(key)),
+        // ].join(':');
 
         // console.log({
         //     method: 'getContractStorage',
@@ -39,19 +40,37 @@ export class CachingStateManager extends EthersStateManager {
         //     cacheKey,
         // })
         
-        let result : any = await this.redisClient.GET(cacheKey);
-        if (! result) {
+        let result : any = await this.storageManager.getStorageSlot({
+            address: address.toString(),
+            blockNumber: BigInt(this._blockTag),
+            storageSlot: bytesToHex(unpadBytes(key)),
+        });
+
+        if (result) {
+            // console.log({
+            //     msg: 'cache HIT!!!',
+            //     blockNumber: this._blockTag,
+            //     address: address.toString(),
+            //     key: bytesToHex(unpadBytes(key)),
+            // });
+            result = hexToBytes(result);
+        } else {
             console.log({
                 msg: 'cache miss',
                 blockNumber: this._blockTag,
                 address: address.toString(),
                 key: bytesToHex(unpadBytes(key)),
-                cacheKey,
             })
+
             result = await super.getContractStorage(address, key);
-            await this.redisClient.set(cacheKey, bytesToHex(result));
-        } else {
-            result = hexToBytes(result);
+
+            await this.storageManager.setStorageSlot({
+                address: address.toString(),
+                blockNumber: BigInt(this._blockTag),
+                storageSlot: bytesToHex(unpadBytes(key)),
+                value: bytesToHex(result),
+            });
+            // await this.redisClient.set(cacheKey, bytesToHex(result));
         }
 
 

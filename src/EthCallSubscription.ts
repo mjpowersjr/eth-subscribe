@@ -9,10 +9,12 @@ import { AddressStorageCacheCodec } from "./codecs/AddressStorageCacheCodec";
 import { EventEmitter } from 'events'
 import { EVMResult } from '@ethereumjs/evm';
 import { RedisClientFactory } from "./RedisClientFactory";
+import { StorageManager } from "./contract-storage/StorageManager";
 
 export type EthCallSubscriptionOpts = {
     // id: string;
     provider: ethers.JsonRpcProvider;
+    storageManager: StorageManager;
     redisClient: redis.RedisClientType<redis.RedisModules, redis.RedisFunctions, redis.RedisScripts>;
     request: {
         address: string;
@@ -28,6 +30,7 @@ export class EthCallSubscription extends EventEmitter {
         address: string;
         data: string;
     };
+    storageManager: StorageManager;
     redisClient: redis.RedisClientType<redis.RedisModules, redis.RedisFunctions, redis.RedisScripts>;
     provider: ethers.JsonRpcProvider;
     subscriptionManager: StorageSubscriptionManager;
@@ -41,6 +44,7 @@ export class EthCallSubscription extends EventEmitter {
         this.redisClient = opts.redisClient;
         this.provider = opts.provider;
         this.subscriptionManager = opts.subscriptionManager;
+        this.storageManager = opts.storageManager;
         this.subscriptions = new StorageSlotsCollection();
         this.codec = new AddressStorageCacheCodec();
 
@@ -54,8 +58,7 @@ export class EthCallSubscription extends EventEmitter {
         // });
 
         const stateManager = new CachingStateManager({
-            // FIXME
-            redisClient: await RedisClientFactory.getInstance(),
+            storageManager: this.storageManager,
             provider: this.provider,
             blockTag: blockNumber,
         });
@@ -113,6 +116,8 @@ export class EthCallSubscription extends EventEmitter {
         }
 
         this.subscriptions = subscriptionsNew;
+
+        this.redisClient.subscribe('block_height', this.handleStorageUpdate);
     }
 
     async addAll(address: string, storageSlots: Array<string> | Set<string>): Promise<void> {

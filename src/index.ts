@@ -8,7 +8,7 @@ import { BlockTag, ethers } from 'ethers';
 import { Interface } from '@ethersproject/abi';
 import IUniswapV2Pair from '@uniswap/v2-core/build/IUniswapV2Pair.json';
 import { hexToBytes } from '@ethereumjs/util'
-import { BulkStorageUpdater } from './contract-storage/BulkStorageUpdater';
+import { StorageManager } from './contract-storage/StorageManager';
 import RedisClientMultiCommand from '@redis/client/dist/lib/client/multi-command';
 import { EthereumProofFetcher } from './contract-storage/EthereumProofFetcher';
 import { RedisClientFactory } from './RedisClientFactory';
@@ -27,7 +27,7 @@ async function main(args: string[]) {
         provider,
     });
 
-    const bulkStorageUpdater = new BulkStorageUpdater({
+    const storageManager = new StorageManager({
         redisClient: await RedisClientFactory.getInstance(),
         proofFetcher,
         subscriptionManager,
@@ -41,6 +41,7 @@ async function main(args: string[]) {
 
     const ethCallSubscription = new EthCallSubscription({
         provider,
+        storageManager,
         redisClient: await RedisClientFactory.getInstance(),
         subscriptionManager,
         request: {
@@ -66,7 +67,7 @@ async function main(args: string[]) {
         // console.log('-'.repeat(80))
         // console.log(`| updating for block: ${blockNumber}`)
         // console.log('-'.repeat(80))
-        await bulkStorageUpdater.update(blockNumber);
+        await storageManager.update(blockNumber);
     });
 
     // const returnValue = iface.decodeFunctionResult('getReserves', result.execResult.returnValue);
