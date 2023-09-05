@@ -1,4 +1,5 @@
 import axios from "axios";
+import { CallbackBody } from "./EmbeddedWebhookServer";
 
 export interface SubscriptionInput {
     address: string;
@@ -21,6 +22,14 @@ export class EthSubscribeClient {
             url: this.endpoint + '/subscribe',
             data,
         })
+    }
+
+    async sendCallback( data: CallbackBody) : Promise<void> {
+        await axios.request({
+            method: 'post',
+            url: this.endpoint,
+            data
+        });
     }
 
 }

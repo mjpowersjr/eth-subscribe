@@ -1,61 +1,56 @@
 import { EthersStateManager, EthersStateManagerOpts } from "@ethereumjs/statemanager";
-import type { Address } from '@ethereumjs/util'
-import { 
-    bytesToHex, 
-    unpadArray,
-    unpadBytes,
-    padToEven,
+import type { Address } from '@ethereumjs/util';
+import {
+    bytesToHex,
     hexToBytes,
- } from '@ethereumjs/util'
-import redis from "@redis/client";
-import { StorageManager } from "../contract-storage/StorageManager";
+    unpadBytes
+} from '@ethereumjs/util';
+import { SlotStorageCacheManager } from "../contract-storage/SlotStorageCacheManager";
+import { Logger, LoggerFactory } from "../utils/LoggerFactory";
 
 export interface CachingStateManagerOpts extends EthersStateManagerOpts {
-    storageManager: StorageManager;
+    storageManager: SlotStorageCacheManager;
 }
 
 export class CachingStateManager extends EthersStateManager {
 
-    storageManager: StorageManager;
+    storageManager: SlotStorageCacheManager;
+    log: Logger;
 
     constructor(opts: CachingStateManagerOpts) {
         super(opts);
         this.storageManager = opts.storageManager;
+        this.log = LoggerFactory.build({ name: CachingStateManager.name });
+
     }
 
     async getContractStorage(address: Address, key: Uint8Array): Promise<Uint8Array> {
-        
-        // const cacheKey = [
-        //     this._blockTag,
-        //     address.toString().toLowerCase(),
-        //     bytesToHex(unpadBytes(key)),
-        // ].join(':');
 
-        // console.log({
-        //     method: 'getContractStorage',
-        //     blockTag: this._blockTag,
-        //     address: address.toString().toLowerCase(),
-        //     key,
-        //     keyHex: bytesToHex(key),
-        //     cacheKey,
-        // })
-        
-        let result : any = await this.storageManager.getStorageSlot({
+        const storageSlot = bytesToHex(unpadBytes(key));
+
+        this.log.debug({
+            method: 'getContractStorage',
+            blockTag: this._blockTag,
+            address: address.toString().toLowerCase(),
+            storageSlot,
+        })
+
+        let result: any = await this.storageManager.getStorage({
             address: address.toString(),
             blockNumber: BigInt(this._blockTag),
-            storageSlot: bytesToHex(unpadBytes(key)),
+            storageSlot,
         });
 
         if (result) {
-            // console.log({
-            //     msg: 'cache HIT!!!',
-            //     blockNumber: this._blockTag,
-            //     address: address.toString(),
-            //     key: bytesToHex(unpadBytes(key)),
-            // });
+            this.log.debug({
+                msg: 'cache hit',
+                blockNumber: this._blockTag,
+                address: address.toString(),
+                key: bytesToHex(unpadBytes(key)),
+            });
             result = hexToBytes(result);
         } else {
-            console.log({
+            this.log.warn({
                 msg: 'cache miss',
                 blockNumber: this._blockTag,
                 address: address.toString(),
@@ -64,15 +59,14 @@ export class CachingStateManager extends EthersStateManager {
 
             result = await super.getContractStorage(address, key);
 
-            await this.storageManager.setStorageSlot({
+            await this.storageManager.setStorage({
                 address: address.toString(),
                 blockNumber: BigInt(this._blockTag),
                 storageSlot: bytesToHex(unpadBytes(key)),
                 value: bytesToHex(result),
             });
-            // await this.redisClient.set(cacheKey, bytesToHex(result));
-        }
 
+        }
 
         return result;
     }

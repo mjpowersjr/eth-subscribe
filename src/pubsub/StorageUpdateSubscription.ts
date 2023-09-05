@@ -1,10 +1,10 @@
-import { AddressStorageCacheCodec } from "../codecs/AddressStorageCacheCodec";
+import { AddressStorageKeyCodec } from "../codecs/AddressStorageKeyCodec";
 import { ArrayUtils } from "../utils/ArrayUtils";
 import { PubSubSubscription } from "./PubSubSubscription";
 
 export class StorageUpdateSubscription extends PubSubSubscription {
 
-    private codec: AddressStorageCacheCodec;
+    private codec: AddressStorageKeyCodec;
     readonly address: string;
     private storageSlots: Array<string>;
 
@@ -13,7 +13,7 @@ export class StorageUpdateSubscription extends PubSubSubscription {
         storageSlots: Array<string>;
     }) {
         super();
-        this.codec = new AddressStorageCacheCodec();
+        this.codec = new AddressStorageKeyCodec();
         this.address = props.address;
         this.storageSlots = props.storageSlots;
     }
